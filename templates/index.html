@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        sidebar: '#0f0f0f',
+                        'sidebar-light': '#1a1a1a',
+                        'sidebar-border': '#2a2a2a',
+                        'text-primary': '#ffffff',
+                        'text-secondary': '#a1a1aa',
+                        'text-muted': '#71717a',
+                        'accent-blue': '#3b82f6',
+                        'accent-purple': '#8b5cf6',
+                        'accent-green': '#10b981',
+                        'accent-orange': '#f59e0b',
+                        'accent-red': '#ef4444',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #505050;
+        }
+
+        /* Modern inputs */
+        .modern-input {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .modern-textarea {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modern-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Modern buttons */
+        .btn-modern {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-modern:disabled {
+            opacity: 0.5;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #2a2a2a;
+            border-color: #3a3a3a;
+        }
+
+        /* Upload zones */
+        .upload-zone {
+            background: #1a1a1a;
+            border: 2px dashed #2a2a2a;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-zone.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Number steppers */
+        .number-stepper {
+            display: flex;
+            align-items: center;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .number-stepper input {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 12px;
+            width: 80px;
+            font-weight: 500;
+        }
+
+        .number-stepper input:focus {
+            outline: none;
+        }
+
+        .number-stepper button {
+            background: #2a2a2a;
+            border: none;
+            color: #ffffff;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .number-stepper button:hover {
+            background: #3a3a3a;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.3s ease;
+            border-radius: 8px;
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-idle { background: #374151; color: #9ca3af; }
+        .status-uploading { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .status-generating { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        .status-completed { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        /* Image preview */
+        .image-preview {
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); }
+        }
+
+        .generating {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        /* Sidebar scrollbar */
+        .sidebar {
+            scrollbar-width: thin;
+            scrollbar-color: #404040 #1a1a1a;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+    <div class="flex h-full">
+        <!-- Left Sidebar -->
+        <div class="w-96 bg-sidebar border-r border-sidebar-border flex flex-col sidebar">
+            <!-- Header -->
+            <div class="p-6 border-b border-sidebar-border flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-accent-blue to-accent-purple rounded-lg flex items-center justify-center">
+                        <i class="fas fa-magic text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-text-primary">AI Generator</h1>
+                        <p class="text-sm text-text-muted">Create amazing images</p>
+                    </div>
+                </div>
+                <button id="gallery-btn" class="btn-secondary">
+                    <i class="fas fa-images"></i>
+                </button>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Image Upload -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-text-primary">Upload Images</h3>
+                    
+                    <!-- Source Image -->
+                    <div class="space-y-3">
+                        <label class="text-sm font-medium text-text-secondary">Source Image</label>
+                        <div id="input-upload" class="upload-zone">
+                            <div id="input-placeholder">
+                                <div class="w-12 h-12 bg-accent-blue/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-image text-accent-blue text-xl"></i>
+                                </div>
+                                <p class="text-text-primary font-medium mb-1">Upload your image</p>
+                                <p class="text-text-muted text-sm">PNG, JPG, GIF • Max 10MB</p>
+                            </div>
+                            <div id="input-preview" class="hidden">
+                                <div class="relative image-preview">
+                                    <img id="input-img" class="w-full max-h-48 object-contain">
+                                    <button onclick="clearImage('input')" class="absolute top-2 right-2 btn-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <p id="input-filename" class="text-text-muted text-sm mt-2"></p>
+                            </div>
+                            <input type="file" id="input-file" class="hidden" accept="image/*">
+                        </div>
+                    </div>
+
+                    <!-- Mask Image -->
+                    <div class="space-y-3">
+                        <label class="text-sm font-medium text-text-secondary">Mask Image (Optional)</label>
+                        <div id="mask-upload" class="upload-zone">
+                            <div id="mask-placeholder">
+                                <div class="w-12 h-12 bg-accent-purple/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-mask text-accent-purple text-xl"></i>
+                                </div>
+                                <p class="text-text-primary font-medium mb-1">Upload mask</p>
+                                <p class="text-text-muted text-sm">Define areas to modify</p>
+                            </div>
+                            <div id="mask-preview" class="hidden">
+                                <div class="relative image-preview">
+                                    <img id="mask-img" class="w-full max-h-48 object-contain">
+                                    <button onclick="clearImage('mask')" class="absolute top-2 right-2 btn-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <p id="mask-filename" class="text-text-muted text-sm mt-2"></p>
+                            </div>
+                            <input type="file" id="mask-file" class="hidden" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prompts -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-text-primary">Prompts</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="text-sm font-medium text-text-secondary">Positive Prompt</label>
+                        <textarea id="prompt" class="modern-textarea w-full" placeholder="wearing red modern dress, beautiful, high quality...">wearing red modern dress</textarea>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <label class="text-sm font-medium text-text-secondary">Negative Prompt</label>
+                        <textarea id="negative-prompt" class="modern-textarea w-full" placeholder="blurry, low quality, deformed...">easynegative,(deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation</textarea>
+                    </div>
+                </div>
+
+                <!-- Generation Settings -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-text-primary">Settings</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Steps -->
+                        <div class="space-y-3">
+                            <label class="text-sm font-medium text-text-secondary">Steps</label>
+                            <div class="number-stepper">
+                                <button type="button" onclick="adjustValue('steps', -1)">
+                                    <i class="fas fa-minus text-sm"></i>
+                                </button>
+                                <input type="number" id="steps" value="20" min="10" max="50" readonly>
+                                <button type="button" onclick="adjustValue('steps', 1)">
+                                    <i class="fas fa-plus text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CFG Scale -->
+                        <div class="space-y-3">
+                            <label class="text-sm font-medium text-text-secondary">CFG Scale</label>
+                            <div class="number-stepper">
+                                <button type="button" onclick="adjustValue('cfg', -0.5)">
+                                    <i class="fas fa-minus text-sm"></i>
+                                </button>
+                                <input type="number" id="cfg" value="7.0" min="1" max="20" step="0.5" readonly>
+                                <button type="button" onclick="adjustValue('cfg', 0.5)">
+                                    <i class="fas fa-plus text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seed -->
+                    <div class="space-y-3">
+                        <label class="text-sm font-medium text-text-secondary">Seed (Optional)</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="seed" class="modern-input flex-1" placeholder="Random seed">
+                            <button type="button" id="random-seed" class="btn-secondary">
+                                <i class="fas fa-dice"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-text-primary">Status</h3>
+                        <span id="status-badge" class="status-badge status-idle">Idle</span>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-text-secondary">Progress</span>
+                            <span id="progress-text" class="text-text-primary">0%</span>
+                        </div>
+                        <div class="progress-container">
+                            <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div id="error-message" class="hidden p-3 bg-accent-red/10 border border-accent-red/20 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-exclamation-triangle text-accent-red"></i>
+                            <span class="text-accent-red text-sm font-medium">Error</span>
+                        </div>
+                        <p id="error-text" class="text-accent-red/80 text-sm mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="p-6 border-t border-sidebar-border">
+                <button id="generate-btn" class="btn-modern w-full">
+                    <i class="fas fa-spinner fa-spin mr-2 spinner hidden"></i>
+                    <i class="fas fa-magic mr-2"></i>
+                    <span class="btn-text">Generate Image</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Main Panel -->
+        <div class="flex-1 bg-black flex items-center justify-center relative">
+            <!-- Main Image Display -->
+            <div id="result-container" class="w-full h-full flex items-center justify-center">
+                <div id="result-placeholder" class="text-center">
+                    <div class="w-32 h-32 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-image text-4xl text-gray-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-text-primary mb-2">Ready to Create</h2>
+                    <p class="text-text-muted">Upload an image and generate your masterpiece</p>
+                </div>
+                
+                <div id="result-image" class="hidden w-full h-full p-8 flex flex-col">
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="max-w-4xl max-h-full">
+                            <img id="output-img" class="max-w-full max-h-full object-contain rounded-xl shadow-2xl" style="max-height: calc(100vh - 200px);">
+                        </div>
+                    </div>
+                    
+                    <!-- Image Controls -->
+                    <div class="flex justify-center gap-4 mt-6">
+                        <button id="download-btn" class="btn-secondary px-6 py-3">
+                            <i class="fas fa-download mr-2"></i>
+                            Download
+                        </button>
+                        <button id="new-generation-btn" class="btn-modern px-6 py-3">
+                            <i class="fas fa-plus mr-2"></i>
+                            Generate Another
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Generation Status (when generating) -->
+            <div id="generation-overlay" class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                <div class="bg-sidebar border border-sidebar-border rounded-2xl p-8 max-w-md mx-4 text-center generating">
+                    <div class="w-16 h-16 bg-gradient-to-br from-accent-blue to-accent-purple rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-magic text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-primary mb-2">Creating Your Image</h3>
+                    <p class="text-text-secondary mb-6">AI is working its magic...</p>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-text-secondary">Progress</span>
+                            <span id="overlay-progress-text" class="text-text-primary font-mono">0%</span>
+                        </div>
+                        <div class="progress-container">
+                            <div id="overlay-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="gallery-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-lg z-50 flex items-center justify-center">
+        <div class="bg-sidebar w-full max-w-6xl h-full max-h-[90vh] rounded-2xl flex flex-col">
+            <div class="p-6 border-b border-sidebar-border flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-text-primary">Image Gallery</h2>
+                <button id="close-gallery-btn" class="btn-secondary">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="gallery-grid" class="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <!-- Gallery images will be injected here -->
+            </div>
+            <div id="gallery-placeholder" class="flex-1 flex items-center justify-center text-center">
+                <div>
+                    <div class="w-24 h-24 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-images text-3xl text-gray-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-primary mb-2">No Images Yet</h3>
+                    <p class="text-text-muted">Generate some images to see them here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html> 
