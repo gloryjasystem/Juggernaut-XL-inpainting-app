@@ -17,8 +17,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure upload and output folders
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'outputs'
+UPLOAD_FOLDER = '/tmp/uploads'
+OUTPUT_FOLDER = '/tmp/outputs'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -54,7 +54,7 @@ def save_base64_image(base64_string, filename):
             base64_string = base64_string.split(',')[1]
         
         image_data = base64.b64decode(base64_string)
-        output_path = os.path.join(OUTPUT_FOLDER, filename)
+        output_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
         
         with open(output_path, 'wb') as f:
             f.write(image_data)
@@ -100,8 +100,8 @@ def generate_image():
         input_filename = f"{task_id}_input.png"
         mask_filename = f"{task_id}_mask.png"
         
-        input_path = os.path.join(UPLOAD_FOLDER, input_filename)
-        mask_path = os.path.join(UPLOAD_FOLDER, mask_filename)
+        input_path = os.path.join(app.config['UPLOAD_FOLDER'], input_filename)
+        mask_path = os.path.join(app.config['UPLOAD_FOLDER'], mask_filename)
         
         input_file.save(input_path)
         mask_file.save(mask_path)
@@ -379,9 +379,9 @@ def serve_output(filename):
 @app.route('/api/gallery')
 def get_gallery():
     try:
-        image_files = [f for f in os.listdir(OUTPUT_FOLDER) if allowed_file(f)]
+        image_files = [f for f in os.listdir(app.config['OUTPUT_FOLDER']) if allowed_file(f)]
         # Sort by modification time, newest first
-        image_files.sort(key=lambda x: os.path.getmtime(os.path.join(OUTPUT_FOLDER, x)), reverse=True)
+        image_files.sort(key=lambda x: os.path.getmtime(os.path.join(app.config['OUTPUT_FOLDER'], x)), reverse=True)
         return jsonify({'images': image_files})
     except Exception as e:
         print(f"❌ Error in get_gallery: {str(e)}")
